@@ -134,6 +134,12 @@
         .pulse {
             animation: pulse 2s ease-in-out infinite;
         }
+        
+        .loading {
+            text-align: center;
+            color: #9ca3af;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -144,9 +150,9 @@
         </div>
         
         <div class="buttons">
-            <a href="dist/index.html" class="btn btn-primary pulse">
+            <button id="startBtn" class="btn btn-primary pulse" onclick="startGame()">
                 🎮 Начать Приключение
-            </a>
+            </button>
             
             <a href="README.md" class="btn btn-secondary">
                 📖 Инструкция
@@ -165,9 +171,51 @@
             </ul>
         </div>
         
+        <div id="loading" class="loading" style="display: none;">
+            🔍 Ищу файл приложения...
+        </div>
+        
         <div class="footer">
             <p>⚔️ Приятной игры! ⚔️</p>
         </div>
     </div>
+
+    <script>
+        function startGame() {
+            const loading = document.getElementById('loading');
+            const btn = document.getElementById('startBtn');
+            
+            loading.style.display = 'block';
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+            
+            // Пробуем найти файл приложения
+            const paths = ['dist/index.html', 'game.html', 'index.html'];
+            let found = false;
+            
+            for (let path of paths) {
+                const img = new Image();
+                img.onload = function() {
+                    if (!found) {
+                        found = true;
+                        window.location.href = path;
+                    }
+                };
+                img.onerror = function() {
+                    // Пробуем следующий путь
+                };
+                img.src = path + '?t=' + Date.now();
+            }
+            
+            // Если ничего не нашли через 3 секунды
+            setTimeout(() => {
+                if (!found) {
+                    loading.innerHTML = '❌ Файл приложения не найден.<br>Запустите <code>play.bat</code> (Windows) или <code>./play.sh</code> (Mac/Linux)';
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                }
+            }, 3000);
+        }
+    </script>
 </body>
 </html>
