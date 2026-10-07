@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐉 D&D AI Dungeon Master - Запуск</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: rgba(30, 30, 50, 0.9);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+        
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .logo h1 {
+            font-size: 2.5em;
+            color: #f59e0b;
+            text-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
+            margin-bottom: 10px;
+        }
+        
+        .logo p {
+            color: #9ca3af;
+            font-size: 1.1em;
+        }
+        
+        .buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .btn {
+            padding: 18px 30px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.6);
+        }
+        
+        .btn-secondary {
+            background: rgba(139, 92, 246, 0.2);
+            color: #a78bfa;
+            border: 2px solid rgba(139, 92, 246, 0.5);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(139, 92, 246, 0.3);
+            border-color: rgba(139, 92, 246, 0.8);
+            transform: translateY(-2px);
+        }
+        
+        .info {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            border-left: 4px solid #f59e0b;
+        }
+        
+        .info h3 {
+            color: #f59e0b;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        
+        .info ul {
+            list-style: none;
+            color: #9ca3af;
+            line-height: 1.8;
+        }
+        
+        .info li:before {
+            content: "⚔️ ";
+            margin-right: 8px;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #6b7280;
+            font-size: 0.9em;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .pulse {
+            animation: pulse 2s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <h1>🐉 D&D AI Dungeon Master</h1>
+            <p>Мастер Подземелий ждёт тебя!</p>
+        </div>
+        
+        <div class="buttons">
+            <a href="dist/index.html" class="btn btn-primary pulse">
+                🎮 Начать Приключение
+            </a>
+            
+            <a href="README.md" class="btn btn-secondary">
+                📖 Инструкция
+            </a>
+        </div>
+        
+        <div class="info">
+            <h3>💡 Как играть:</h3>
+            <ul>
+                <li>Создайте своего персонажа</li>
+                <li>Выбирайте действия в приключении</li>
+                <li>Бросайте кубики для проверок</li>
+                <li>Исследуйте мир D&D</li>
+                <li>Сражайтесь с монстрами</li>
+                <li>Получайте квесты от NPC</li>
+            </ul>
+        </div>
+        
+        <div class="footer">
+            <p>⚔️ Приятной игры! ⚔️</p>
+        </div>
+    </div>
+</body>
+</html>
