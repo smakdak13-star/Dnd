@@ -1,14 +1,17 @@
 import { useState, useRef, useEffect } from 'react';
-import { Character, CharacterStats, Message, GameState } from './types';
-import type { GameScreen as GameScreenType } from './types';
+import { Character, CharacterStats, Message, GameState, Item, Skill, Spell } from './types';
 import {
   generateOpeningNarrative,
   generateDMResponse,
   generateInitialGameState,
   generateQuestHook,
   rollDice,
-  rollMultipleDice
+  rollMultipleDice,
+  getModifier,
+  getProficiencyBonus,
+  getXpForLevel,
 } from './dmEngine';
+import { spells, rarityColors, rarityNames } from './gameData';
 
 const races = ['Человек', 'Эльф', 'Дварф', 'Полурослик', 'Драконорождённый', 'Гном', 'Полуэльф', 'Тифлинг'];
 const classes = ['Воин', 'Маг', 'Плут', 'Жрец', 'Следопыт', 'Бард', 'Паладин', 'Колдун', 'Друид', 'Монах'];
@@ -26,7 +29,7 @@ function generateStats(): CharacterStats {
     constitution: finalStats[2],
     intelligence: finalStats[3],
     wisdom: finalStats[4],
-    charisma: finalStats[5]
+    charisma: finalStats[5],
   };
 }
 
@@ -48,19 +51,53 @@ function CharacterCreation({ onComplete }: { onComplete: (char: Character) => vo
 
   const handleStart = () => {
     if (!name.trim()) return;
+    
+    const hp = 10 + getModifier(stats.constitution) + rollDice(8);
     const character: Character = {
       name: name.trim(),
       race,
       class: charClass,
       level: 1,
-      hp: 10 + Math.floor((stats.constitution - 10) / 2) + rollDice(8),
-      maxHp: 10 + Math.floor((stats.constitution - 10) / 2) + rollDice(8),
+      hp,
+      maxHp: hp,
+      tempHp: 0,
       stats,
-      inventory: ['Зелье лечения', 'Факел', 'Верёвка (15м)'],
+      inventory: [],
+      spells: [],
+      spellSlots: [2, 0, 0, 0, 0, 0, 0, 0, 0],
+      maxSpellSlots: [2, 0, 0, 0, 0, 0, 0, 0, 0],
+      skills: [
+        { name: 'Атлетика', ability: 'strength', proficient: false },
+        { name: 'Акробатика', ability: 'dexterity', proficient: false },
+        { name: 'Скрытность', ability: 'dexterity', proficient: charClass === 'Плут' || charClass === 'Следопыт' },
+        { name: 'Внимательность', ability: 'wisdom', proficient: false },
+        { name: 'Убеждение', ability: 'charisma', proficient: false },
+        { name: 'Обман', ability: 'charisma', proficient: charClass === 'Плут' || charClass === 'Бард' },
+      ],
+      conditions: [],
+      xp: 0,
+      xpToNext: getXpForLevel(2),
       gold: rollDice(20) + 10,
-      backstory
+      speed: race === 'Полурослик' || race === 'Гном' ? 25 : 30,
+      armorClass: 10 + getModifier(stats.dexterity),
+      proficiencyBonus: 2,
+      inspiration: false,
+      hitDice: '1d8',
+      maxHitDice: 1,
+      currentHitDice: 1,
+      backstory,
+      alignment: 'Нейтральный',
+      personalityTraits: ['Храбрый', 'Решительный'],
+      ideals: ['Свобода'],
+      bonds: ['Защитить невинных'],
+      flaws: ['Слишком доверчив'],
+      languages: ['Общий', race === 'Эльф' ? 'Эльфийский' : race === 'Дварф' ? 'Дварфийский' : 'Общий'],
+      toolProficiencies: [],
+      savingThrowProficiencies: ['strength', 'constitution'],
+      features: ['Второе дыхание'],
+      deathSaves: { successes: 0, failures: 0 },
     };
-    character.maxHp = character.hp;
+    
     onComplete(character);
   };
 
@@ -71,11 +108,10 @@ function CharacterCreation({ onComplete }: { onComplete: (char: Character) => vo
           <h1 className="text-4xl font-bold text-amber-400 mb-2" style={{ fontFamily: 'serif' }}>
             ⚔️ Создание Персонажа
           </h1>
-          <p className="text-gray-400">Создай своего героя для приключений в мире D&D</p>
+          <p className="text-gray-400">Создай своего героя для приключений в мире D&D 5e</p>
         </div>
 
         <div className="space-y-6">
-          {/* Name */}
           <div>
             <label className="block text-amber-300 text-sm font-medium mb-2">Имя героя</label>
             <input
@@ -87,7 +123,6 @@ function CharacterCreation({ onComplete }: { onComplete: (char: Character) => vo
             />
           </div>
 
-          {/* Race & Class */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-amber-300 text-sm font-medium mb-2">Раса</label>
@@ -111,7 +146,6 @@ function CharacterCreation({ onComplete }: { onComplete: (char: Character) => vo
             </div>
           </div>
 
-          {/* Stats */}
           <div>
             <div className="flex justify-between items-center mb-3">
               <label className="text-amber-300 text-sm font-medium">Характеристики</label>
@@ -139,7 +173,6 @@ function CharacterCreation({ onComplete }: { onComplete: (char: Character) => vo
             </div>
           </div>
 
-          {/* Backstory */}
           <div>
             <label className="block text-amber-300 text-sm font-medium mb-2">Предыстория (необязательно)</label>
             <textarea
@@ -151,7 +184,6 @@ function CharacterCreation({ onComplete }: { onComplete: (char: Character) => vo
             />
           </div>
 
-          {/* Start Button */}
           <button
             onClick={handleStart}
             disabled={!name.trim()}
@@ -222,17 +254,18 @@ function GameScreen({ character: initialCharacter }: { character: Character }) {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
+  const [showInventory, setShowInventory] = useState(false);
+  const [showQuests, setShowQuests] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // Generate opening narrative
     const opening = generateOpeningNarrative(initialCharacter);
     const openingMsg: Message = {
       id: '0',
       type: 'dm',
       content: opening,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
     setMessages([openingMsg]);
   }, []);
@@ -248,26 +281,28 @@ function GameScreen({ character: initialCharacter }: { character: Character }) {
       id: Date.now().toString(),
       type: 'player',
       content: input.trim(),
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
     setMessages(prev => [...prev, playerMsg]);
     setInput('');
     setIsTyping(true);
 
-    // Simulate DM thinking
     setTimeout(() => {
-      const { response, updatedState } = generateDMResponse(input.trim(), character, gameState);
+      const { response, updatedState, updatedCharacter } = generateDMResponse(input.trim(), character, gameState);
       
       const dmMsg: Message = {
         id: (Date.now() + 1).toString(),
         type: 'dm',
         content: response,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
       setMessages(prev => [...prev, dmMsg]);
       setGameState(updatedState);
+      if (updatedCharacter) {
+        setCharacter(updatedCharacter);
+      }
       setIsTyping(false);
     }, 800 + Math.random() * 1200);
   };
@@ -278,7 +313,7 @@ function GameScreen({ character: initialCharacter }: { character: Character }) {
       id: Date.now().toString(),
       type: 'dm',
       content: quest,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
     setMessages(prev => [...prev, questMsg]);
   };
@@ -288,17 +323,20 @@ function GameScreen({ character: initialCharacter }: { character: Character }) {
       id: Date.now().toString(),
       type: 'roll',
       content: text,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
     setMessages(prev => [...prev, diceMsg]);
   };
 
   const formatMessage = (content: string) => {
-    // Simple markdown-like formatting
     return content
       .replace(/\*\*(.*?)\*\*/g, '<strong class="text-amber-300">$1</strong>')
       .replace(/\*(.*?)\*/g, '<em class="text-gray-400 italic">$1</em>')
       .replace(/\n/g, '<br/>');
+  };
+
+  const getItemRarityColor = (rarity: string) => {
+    return rarityColors[rarity] || '#9ca3af';
   };
 
   return (
@@ -327,39 +365,103 @@ function GameScreen({ character: initialCharacter }: { character: Character }) {
             </div>
           </div>
 
+          {/* XP */}
+          <div className="bg-gray-700/50 rounded-lg p-3">
+            <div className="flex justify-between text-sm mb-1">
+              <span className="text-blue-400">⭐ Опыт</span>
+              <span className="text-white">{character.xp}/{character.xpToNext}</span>
+            </div>
+            <div className="w-full bg-gray-600 rounded-full h-2">
+              <div 
+                className="bg-blue-500 h-2 rounded-full transition-all"
+                style={{ width: `${(character.xp / character.xpToNext) * 100}%` }}
+              />
+            </div>
+          </div>
+
           {/* Stats */}
           <div className="bg-gray-700/50 rounded-lg p-3">
             <h3 className="text-amber-300 text-sm font-medium mb-2">Характеристики</h3>
             <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="flex justify-between"><span className="text-gray-400">Сила</span><span className="text-white">{character.stats.strength}</span></div>
-              <div className="flex justify-between"><span className="text-gray-400">Ловкость</span><span className="text-white">{character.stats.dexterity}</span></div>
-              <div className="flex justify-between"><span className="text-gray-400">Телосл.</span><span className="text-white">{character.stats.constitution}</span></div>
-              <div className="flex justify-between"><span className="text-gray-400">Интеллект</span><span className="text-white">{character.stats.intelligence}</span></div>
-              <div className="flex justify-between"><span className="text-gray-400">Мудрость</span><span className="text-white">{character.stats.wisdom}</span></div>
-              <div className="flex justify-between"><span className="text-gray-400">Харизма</span><span className="text-white">{character.stats.charisma}</span></div>
+              <div className="flex justify-between"><span className="text-gray-400">Сила</span><span className="text-white">{character.stats.strength} ({getModifier(character.stats.strength) >= 0 ? '+' : ''}{getModifier(character.stats.strength)})</span></div>
+              <div className="flex justify-between"><span className="text-gray-400">Ловкость</span><span className="text-white">{character.stats.dexterity} ({getModifier(character.stats.dexterity) >= 0 ? '+' : ''}{getModifier(character.stats.dexterity)})</span></div>
+              <div className="flex justify-between"><span className="text-gray-400">Телосл.</span><span className="text-white">{character.stats.constitution} ({getModifier(character.stats.constitution) >= 0 ? '+' : ''}{getModifier(character.stats.constitution)})</span></div>
+              <div className="flex justify-between"><span className="text-gray-400">Интеллект</span><span className="text-white">{character.stats.intelligence} ({getModifier(character.stats.intelligence) >= 0 ? '+' : ''}{getModifier(character.stats.intelligence)})</span></div>
+              <div className="flex justify-between"><span className="text-gray-400">Мудрость</span><span className="text-white">{character.stats.wisdom} ({getModifier(character.stats.wisdom) >= 0 ? '+' : ''}{getModifier(character.stats.wisdom)})</span></div>
+              <div className="flex justify-between"><span className="text-gray-400">Харизма</span><span className="text-white">{character.stats.charisma} ({getModifier(character.stats.charisma) >= 0 ? '+' : ''}{getModifier(character.stats.charisma)})</span></div>
             </div>
           </div>
 
-          {/* Inventory */}
+          {/* Combat Stats */}
           <div className="bg-gray-700/50 rounded-lg p-3">
-            <h3 className="text-amber-300 text-sm font-medium mb-2">🎒 Инвентарь</h3>
-            <ul className="space-y-1">
-              {character.inventory.map((item, i) => (
-                <li key={i} className="text-gray-300 text-xs flex items-center gap-1">
-                  <span className="text-amber-500">•</span> {item}
-                </li>
-              ))}
-            </ul>
-            <div className="mt-2 text-yellow-400 text-xs font-medium">💰 {character.gold} золотых</div>
+            <h3 className="text-amber-300 text-sm font-medium mb-2">Боевые параметры</h3>
+            <div className="space-y-1 text-xs">
+              <div className="flex justify-between"><span className="text-gray-400">КД</span><span className="text-white">{character.armorClass}</span></div>
+              <div className="flex justify-between"><span className="text-gray-400">Инициатива</span><span className="text-white">{getModifier(character.stats.dexterity) >= 0 ? '+' : ''}{getModifier(character.stats.dexterity)}</span></div>
+              <div className="flex justify-between"><span className="text-gray-400">Скорость</span><span className="text-white">{character.speed} фт.</span></div>
+              <div className="flex justify-between"><span className="text-gray-400">Бонус мастерства</span><span className="text-white">+{character.proficiencyBonus}</span></div>
+            </div>
           </div>
+
+          {/* Inventory Button */}
+          <button
+            onClick={() => setShowInventory(!showInventory)}
+            className="w-full py-2 bg-gray-700/50 hover:bg-gray-600/50 text-amber-300 text-sm rounded-lg transition border border-gray-600"
+          >
+            🎒 Инвентарь ({character.inventory.length}) 💰 {character.gold}з
+          </button>
+
+          {showInventory && (
+            <div className="bg-gray-700/50 rounded-lg p-3">
+              <h3 className="text-amber-300 text-sm font-medium mb-2">Предметы</h3>
+              <ul className="space-y-1 max-h-40 overflow-y-auto">
+                {character.inventory.length === 0 ? (
+                  <li className="text-gray-500 text-xs">Пусто</li>
+                ) : (
+                  character.inventory.map((item, i) => (
+                    <li key={i} className="text-xs flex items-center gap-1" style={{ color: getItemRarityColor(item.rarity) }}>
+                      <span>•</span> {item.name} <span className="text-gray-500">({rarityNames[item.rarity]})</span>
+                    </li>
+                  ))
+                )}
+              </ul>
+            </div>
+          )}
+
+          {/* Quests Button */}
+          <button
+            onClick={() => setShowQuests(!showQuests)}
+            className="w-full py-2 bg-gray-700/50 hover:bg-gray-600/50 text-amber-300 text-sm rounded-lg transition border border-gray-600"
+          >
+            📜 Квесты ({gameState.quests.length})
+          </button>
+
+          {showQuests && (
+            <div className="bg-gray-700/50 rounded-lg p-3">
+              <h3 className="text-amber-300 text-sm font-medium mb-2">Активные квесты</h3>
+              <ul className="space-y-2 max-h-40 overflow-y-auto">
+                {gameState.quests.length === 0 ? (
+                  <li className="text-gray-500 text-xs">Нет активных квестов</li>
+                ) : (
+                  gameState.quests.map((quest, i) => (
+                    <li key={i} className="text-xs">
+                      <div className="text-white font-medium">{quest.name}</div>
+                      <div className="text-gray-400">{quest.description}</div>
+                    </li>
+                  ))
+                )}
+              </ul>
+            </div>
+          )}
 
           {/* Game State */}
           <div className="bg-gray-700/50 rounded-lg p-3">
             <h3 className="text-amber-300 text-sm font-medium mb-2">🌍 Мир</h3>
             <div className="space-y-1 text-xs">
-              <div className="flex justify-between"><span className="text-gray-400">Место:</span><span className="text-white truncate ml-2">{gameState.location}</span></div>
-              <div className="flex justify-between"><span className="text-gray-400">Время:</span><span className="text-white">{gameState.timeOfDay}</span></div>
-              <div className="flex justify-between"><span className="text-gray-400">Погода:</span><span className="text-white">{gameState.weather}</span></div>
+              <div><span className="text-gray-400">Место:</span> <span className="text-white">{gameState.location}</span></div>
+              <div><span className="text-gray-400">Время:</span> <span className="text-white">{gameState.timeOfDay}</span></div>
+              <div><span className="text-gray-400">Погода:</span> <span className="text-white">{gameState.weather}</span></div>
+              <div><span className="text-gray-400">День:</span> <span className="text-white">{gameState.day}</span></div>
             </div>
           </div>
 
@@ -383,7 +485,7 @@ function GameScreen({ character: initialCharacter }: { character: Character }) {
               <h1 className="text-amber-400 font-bold text-lg" style={{ fontFamily: 'serif' }}>
                 🐉 AI Dungeon Master
               </h1>
-              <p className="text-gray-500 text-xs">Мастер подземелий ведёт твою историю...</p>
+              <p className="text-gray-500 text-xs">D&D 5e • Мастер подземелий ведёт твою историю...</p>
             </div>
           </div>
           <div className="flex gap-2">
@@ -461,7 +563,7 @@ function GameScreen({ character: initialCharacter }: { character: Character }) {
             </button>
           </div>
           <div className="flex gap-2 mt-2 flex-wrap">
-            {['⚔️ Атаковать', '🔍 Осмотреть', '💬 Говорить', '🚶 Идти', '🏕️ Отдых', '✨ Магия'].map(action => (
+            {['⚔️ Атаковать', '🔍 Осмотреть', '💬 Говорить', '🚶 Идти', '🏕️ Отдых', '✨ Магия', '🥷 Скрыться', '🎒 Использовать'].map(action => (
               <button
                 key={action}
                 onClick={() => {
@@ -481,7 +583,7 @@ function GameScreen({ character: initialCharacter }: { character: Character }) {
 }
 
 export default function App() {
-  const [screen, setScreen] = useState<GameScreenType>('character-creation');
+  const [screen, setScreen] = useState<'character-creation' | 'game'>('character-creation');
   const [character, setCharacter] = useState<Character | null>(null);
 
   const handleCharacterComplete = (char: Character) => {

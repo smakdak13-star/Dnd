@@ -11,7 +11,7 @@ export const weapons: Item[] = [
   { id: 'light_hammer', name: 'Лёгкий молот', type: 'weapon', rarity: 'common', description: 'Маленький боевой молот', damage: '1d4 дробящий', properties: ['лёгкое', 'метательное'], weight: 2, value: 2 },
   { id: 'mace', name: 'Булава', type: 'weapon', rarity: 'common', description: 'Тяжёлая боевая булава с шипами', damage: '1d6 дробящий', weight: 4, value: 5 },
   { id: 'quarterstaff', name: 'Боевой посох', type: 'weapon', rarity: 'common', description: 'Длинный деревянный посох', damage: '1d6 дробящий', properties: ['универсальное'], weight: 4, value: 0.2 },
-  { id: 'shortbow', name: trim('Короткий лук'), type: 'weapon', rarity: 'common', description: 'Маленький лук', damage: '1d6 колющий', properties: ['боеприпасы', 'два оружия'], weight: 2, value: 25 },
+  { id: 'shortbow', name: 'Короткий лук', type: 'weapon', rarity: 'common', description: 'Маленький лук', damage: '1d6 колющий', properties: ['боеприпасы', 'два оружия'], weight: 2, value: 25 },
   // Воинское оружие
   { id: 'longsword', name: 'Длинный меч', type: 'weapon', rarity: 'common', description: 'Классический рыцарский меч', damage: '1d8 рубящий', properties: ['универсальное'], weight: 3, value: 15 },
   { id: 'greataxe', name: 'Секира', type: 'weapon', rarity: 'common', description: 'Огромный двуручный топор', damage: '1d12 рубящий', properties: ['тяжёлое', 'двуручное'], weight: 7, value: 30 },
@@ -58,7 +58,7 @@ export const potions: Item[] = [
   { id: 'potion_supreme_healing', name: 'Зелье высшего лечения', type: 'potion', rarity: 'veryRare', description: 'Восстанавливает 10d4+20 HP', weight: 0.5, value: 1350, effect: 'heal_10d4+20' },
   { id: 'potion_invisibility', name: 'Зелье невидимости', type: 'potion', rarity: 'uncommon', description: 'Делает невидимым на 1 час', weight: 0.5, value: 250, effect: 'invisible_1h' },
   { id: 'potion_flying', name: 'Зелье полёта', type: 'potion', rarity: 'uncommon', description: 'Позволяет летать 1 час', weight: 0.5, value: 300, effect: 'fly_1h' },
-  { id: 'potion_giant_strength', name: 'Зелье силы великана', type: 'potion', rarity: 'varies', description: 'Устанавливает Силу 21-25', weight: 0.5, value: 500, effect: 'str_21' },
+  { id: 'potion_giant_strength', name: 'Зелье силы великана', type: 'potion', rarity: 'rare', description: 'Устанавливает Силу 21-25', weight: 0.5, value: 500, effect: 'str_21' },
   { id: 'potion_poison', name: 'Зелье яда', type: 'potion', rarity: 'uncommon', description: 'Смертельный яд', weight: 0.5, value: 100, effect: 'poison_10d10' },
   { id: 'potion_resistance', name: 'Зелье сопротивления', type: 'potion', rarity: 'uncommon', description: 'Сопротивление одному типу урона', weight: 0.5, value: 200, effect: 'resistance_1h' },
   { id: 'potion_speed', name: 'Зелье скорости', type: 'potion', rarity: 'veryRare', description: 'Удваивает скорость на 1 минуту', weight: 0.5, value: 500, effect: 'haste_1m' },
@@ -117,7 +117,7 @@ export const spells: Spell[] = [
   // Заговоры (0 уровень)
   { name: 'Огненный снаряд', level: 0, school: 'evocation', castingTime: '1 действие', range: '120 фт.', duration: 'Мгновенная', components: 'В, С', description: 'Бросает огненный шар, наносящий 1d10 огненного урона', damage: '1d10' },
   { name: 'Свет', level: 0, school: 'evocation', castingTime: '1 действие', range: 'Касание', duration: '1 час', components: 'В, М', description: 'Предмет начинает светиться ярким светом' },
-  { name: 'Малая иллюзия', level: 0, school: 'illusion', castingTime: '1 действие', range: '30 фт.', duration: '1 минута', description: 'Создаёт звук или изображение' },
+  { name: 'Малая иллюзия', level: 0, school: 'illusion', castingTime: '1 действие', range: '30 фт.', duration: '1 минута', components: 'С, М', description: 'Создаёт звук или изображение' },
   { name: 'Ядовитые брызги', level: 0, school: 'conjuration', castingTime: '1 действие', range: '30 фт.', duration: 'Мгновенная', components: 'В, С', description: 'Ядовитая жидкость, 1d12 урона ядом', damage: '1d12' },
   { name: 'Ледяной луч', level: 0, school: 'evocation', castingTime: '1 действие', range: '60 фт.', duration: 'Мгновенная', components: 'В, С', description: 'Луч холода, 1d8 урона холодом', damage: '1d8' },
   { name: 'Священное пламя', level: 0, school: 'evocation', castingTime: '1 действие', range: '60 фт.', duration: 'Мгновенная', components: 'В, С', description: 'Пламя излучающего урона', damage: '1d8' },
