@@ -1,73 +1,71 @@
 @echo off
-chcp 65001 >nul
-title Публикация на GitHub
+chcp 65001 >nul 2>&1
+title Publish to GitHub
 color 0B
 
 echo.
-echo ╔═══════════════════════════════════════════════════════════╗
-echo ║                                                           ║
-echo ║           🚀 Публикация D&D на GitHub 🚀                  ║
-echo ║                                                           ║
-echo ╚═══════════════════════════════════════════════════════════╝
+echo ================================================================
+echo           Publish DnD to GitHub
+echo ================================================================
 echo.
 
-REM Проверка наличия Git
+REM Check Git
 where git >nul 2>nul
 if %ERRORLEVEL% NEQ 0 (
-    echo [!] Git не найден!
-    echo [!] Установите Git: https://git-scm.com/download/win
+    echo [!] Git not found!
+    echo [!] Install Git: https://git-scm.com/download/win
     echo.
     pause
     exit /b
 )
 
-echo [✓] Git найден
+echo [OK] Git found
 echo.
 
-REM Проверка инициализации Git
+REM Check if Git initialized
 if not exist ".git" (
-    echo [*] Инициализация Git репозитория...
+    echo [*] Initializing Git repository...
     git init
     git add .
-    git commit -m "Initial commit: D&D AI Dungeon Master"
-    echo [✓] Репозиторий инициализирован
+    git commit -m "Initial commit: DnD AI Dungeon Master"
+    echo [OK] Repository initialized
     echo.
 )
 
-REM Проверка remote
+REM Check remote
 git remote -v >nul 2>nul
 if %ERRORLEVEL% NEQ 0 (
-    echo [!] Remote не настроен
+    echo [!] Remote not configured
     echo.
-    echo Введите URL вашего GitHub репозитория:
-    echo Пример: https://github.com/username/Dnd.git
+    echo Enter your GitHub repository URL:
+    echo Example: https://github.com/username/Dnd.git
     echo.
     set /p REPO_URL="URL: "
     
     if "%REPO_URL%"=="" (
-        echo [!] URL не введён
+        echo [!] URL not entered
         pause
         exit /b
     )
     
     git remote add origin %REPO_URL%
-    echo [✓] Remote добавлен: %REPO_URL%
+    echo [OK] Remote added: %REPO_URL%
     echo.
 ) else (
-    echo [✓] Remote уже настроен
+    echo [OK] Remote already configured
     git remote -v
     echo.
 )
 
-echo Выберите действие:
+echo Choose action:
 echo.
-echo   1. Опубликовать (push)
-echo   2. Обновить существующий репозиторий
-echo   3. Переключиться на SSH
-echo   4. Очистить Git кеш
-echo   5. Выход
+echo   1. Publish (push)
+echo   2. Update existing repository
+echo   3. Switch to SSH
+echo   4. Clean Git cache
+echo   5. Exit
 echo.
-set /p choice="Введите номер (1-5): "
+set /p choice="Enter number (1-5): "
 
 if "%choice%"=="1" goto push
 if "%choice%"=="2" goto update
@@ -75,37 +73,36 @@ if "%choice%"=="3" goto ssh
 if "%choice%"=="4" goto clean
 if "%choice%"=="5" goto exit
 
-echo [!] Неверный выбор
+echo [!] Invalid choice
 pause
 exit /b
 
 :push
 echo.
-echo [*] Публикация на GitHub...
+echo [*] Publishing to GitHub...
 echo.
 
-REM Пробуем разные ветки
 git branch -M main 2>nul
 git push -u origin main
 if %ERRORLEVEL% EQU 0 (
     echo.
-    echo [✓] Успешно опубликовано!
+    echo [OK] Published successfully!
     echo.
-    echo Откройте репозиторий в браузере?
+    echo Open repository in browser?
     set /p open="y/n: "
     if /i "%open%"=="y" (
         for /f "tokens=*" %%i in ('git remote get-url origin') do start "" "%%i"
     )
 ) else (
     echo.
-    echo [!] Ошибка публикации
+    echo [!] Publish error
     echo.
-    echo Возможные решения:
-    echo 1. Проверьте URL репозитория
-    echo 2. Попробуйте SSH вместо HTTPS
-    echo 3. Подождите и попробуйте снова (временная ошибка GitHub)
+    echo Possible solutions:
+    echo 1. Check repository URL
+    echo 2. Try SSH instead of HTTPS
+    echo 3. Wait and try again (temporary GitHub error)
     echo.
-    echo Попробовать SSH?
+    echo Try SSH?
     set /p try_ssh="y/n: "
     if /i "%try_ssh%"=="y" goto ssh
 )
@@ -115,14 +112,14 @@ exit /b
 
 :update
 echo.
-echo [*] Обновление репозитория...
+echo [*] Updating repository...
 git add .
 git commit -m "Update: %date% %time%"
 git push
 if %ERRORLEVEL% EQU 0 (
-    echo [✓] Репозиторий обновлён!
+    echo [OK] Repository updated!
 ) else (
-    echo [!] Ошибка обновления
+    echo [!] Update error
 )
 echo.
 pause
@@ -130,36 +127,34 @@ exit /b
 
 :ssh
 echo.
-echo [*] Переключение на SSH...
+echo [*] Switching to SSH...
 echo.
-echo Текущий remote:
+echo Current remote:
 git remote -v
 echo.
 
-REM Получаем URL и конвертируем в SSH
 for /f "tokens=2 delims= " %%i in ('git remote get-url origin') do set CURRENT_URL=%%i
 
-REM Конвертируем HTTPS в SSH
 set SSH_URL=%CURRENT_URL:https://github.com/=git@github.com:%
 set SSH_URL=%SSH_URL:.git=%
 set SSH_URL=%SSH_URL%.git
 
-echo Новый SSH URL: %SSH_URL%
+echo New SSH URL: %SSH_URL%
 echo.
-echo Продолжить?
+echo Continue?
 set /p confirm="y/n: "
 if /i not "%confirm%"=="y" (
-    echo Отменено
+    echo Cancelled
     pause
     exit /b
 )
 
 git remote remove origin
 git remote add origin %SSH_URL%
-echo [✓] Remote переключён на SSH
+echo [OK] Remote switched to SSH
 
 echo.
-echo Попробовать опубликовать снова?
+echo Try publishing again?
 set /p retry="y/n: "
 if /i "%retry%"=="y" goto push
 
@@ -169,16 +164,16 @@ exit /b
 
 :clean
 echo.
-echo [*] Очистка Git кеша...
+echo [*] Cleaning Git cache...
 git gc --prune=now
 git remote prune origin
-echo [✓] Кеш очищён
+echo [OK] Cache cleaned
 echo.
 pause
 exit /b
 
 :exit
 echo.
-echo [*] До встречи! 🐉
+echo [*] Goodbye!
 timeout /t 2 >nul
 exit /b

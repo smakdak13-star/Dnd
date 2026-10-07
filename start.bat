@@ -1,19 +1,15 @@
 @echo off
-chcp 65001 >nul
-title D&D AI Dungeon Master
+chcp 65001 >nul 2>&1
+title DnD AI Dungeon Master
 color 0E
 
 echo.
-echo ╔═══════════════════════════════════════════════════════════╗
-echo ║                                                           ║
-echo ║           🐉 D&D AI Dungeon Master 🐉                     ║
-echo ║                                                           ║
-echo ║              Мастер Подземелий v1.0                       ║
-echo ║                                                           ║
-echo ╚═══════════════════════════════════════════════════════════╝
+echo ================================================================
+echo           DnD AI Dungeon Master - Menu
+echo ================================================================
 echo.
 
-REM Автоматический поиск файла приложения
+REM Auto-find game file
 set "GAME_FILE="
 
 if exist "game.html" (
@@ -31,60 +27,60 @@ if exist "index.html" (
     goto found
 )
 
-echo [!] Файл приложения не найден.
+echo [!] Game file not found.
 echo.
-echo Выберите действие:
+echo Choose action:
 echo.
-echo   1. Собрать приложение автоматически
-echo   2. Выход
+echo   1. Build app automatically
+echo   2. Exit
 echo.
-set /p choice="Введите номер (1-2): "
+set /p choice="Enter number (1-2): "
 
 if "%choice%"=="1" goto build
 if "%choice%"=="2" goto exit
 
-echo [!] Неверный выбор
+echo [!] Invalid choice
 pause
 exit /b
 
 :found
-echo [✓] Найден файл: %GAME_FILE%
+echo [OK] Found file: %GAME_FILE%
 echo.
-echo Выберите режим:
+echo Choose mode:
 echo.
-echo   1. Открыть приложение в браузере
-echo   2. Запустить dev-сервер (для разработчиков)
-echo   3. Пересобрать приложение
-echo   4. Выход
+echo   1. Open app in browser
+echo   2. Start dev server (for developers)
+echo   3. Rebuild app
+echo   4. Exit
 echo.
-set /p choice="Введите номер (1-4): "
+set /p choice="Enter number (1-4): "
 
 if "%choice%"=="1" goto open
 if "%choice%"=="2" goto dev
 if "%choice%"=="3" goto build
 if "%choice%"=="4" goto exit
 
-echo [!] Неверный выбор
+echo [!] Invalid choice
 pause
 exit /b
 
 :open
 echo.
-echo [*] Открываю приложение в браузере...
+echo [*] Opening app in browser...
 start "" "%GAME_FILE%"
-echo [✓] Приложение открыто!
+echo [OK] App opened!
 echo.
 pause
 exit /b
 
 :dev
 echo.
-echo [*] Запускаю dev-сервер...
-echo [*] Приложение будет доступно по адресу: http://localhost:3000
+echo [*] Starting dev server...
+echo [*] App will be available at: http://localhost:3000
 echo.
 where node >nul 2>nul
 if %ERRORLEVEL% NEQ 0 (
-    echo [!] Node.js не найден. Установите Node.js с https://nodejs.org/
+    echo [!] Node.js not found. Install from https://nodejs.org/
     pause
     exit /b
 )
@@ -95,19 +91,18 @@ exit /b
 echo.
 where node >nul 2>nul
 if %ERRORLEVEL% NEQ 0 (
-    echo [!] Node.js не найден. Установите Node.js с https://nodejs.org/
+    echo [!] Node.js not found. Install from https://nodejs.org/
     pause
     exit /b
 )
-echo [*] Устанавливаю зависимости...
+echo [*] Installing dependencies...
 call npm install
 echo.
-echo [*] Собираю приложение...
+echo [*] Building app...
 call npm run build
 if %ERRORLEVEL% EQU 0 (
     echo.
-    echo [✓] Сборка завершена успешно!
-    echo [*] Открываю приложение...
+    echo [OK] Build complete!
     if exist "game.html" (
         start "" "game.html"
     ) else if exist "dist\index.html" (
@@ -115,7 +110,7 @@ if %ERRORLEVEL% EQU 0 (
     )
 ) else (
     echo.
-    echo [!] Ошибка при сборке
+    echo [!] Build error
 )
 echo.
 pause
@@ -123,6 +118,6 @@ exit /b
 
 :exit
 echo.
-echo [*] До встречи в подземельях! 🐉
+echo [*] See you in the dungeons!
 timeout /t 2 >nul
 exit /b
